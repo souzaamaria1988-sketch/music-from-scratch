@@ -3,21 +3,21 @@ on:
   workflow_dispatch:
     inputs:
       style:
-        description: 'Estilo: random, calm, tense, epic, chaotic'
+        description: 'random/calm/tense/epic/chaotic/boss_fight'
         default: 'epic'
       length:
-        description: 'Tokens'
+        description: 'Tokens (256-2048)'
         default: '512'
       bpm:
         description: 'BPM'
         default: '120'
       seed:
-        description: 'Seed (vazio = aleatorio)'
+        description: 'Seed (vazio=aleatorio)'
         default: ''
 permissions:
   contents: write
 jobs:
-  generate:
+  gen:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -26,28 +26,26 @@ jobs:
         with:
           python-version: '3.10'
           cache: 'pip'
-      - name: Install system
-        run: sudo apt-get update && sudo apt-get install -y fluidsynth ffmpeg
-      - name: Install python
+      - name: Install
         run: |
+          sudo apt-get update && sudo apt-get install -y fluidsynth ffmpeg
           pip install --upgrade pip
           pip install -r requirements.txt
       - name: Generate
         env:
           PYTHONUNBUFFERED: 1
         run: |
-          SEED_ARG=''
-          if [ -n '${{ github.event.inputs.seed }}' ]; then SEED_ARG='--seed ${{ github.event.inputs.seed }}'; fi
-          python generate.py --ckpt models/best.pt --prompt-style ${{ github.event.inputs.style }} --length ${{ github.event.inputs.length }} --bpm ${{ github.event.inputs.bpm }} $SEED_ARG --out outputs --soundfonts soundfonts
+          SEED=''
+          if [ -n '${{ github.event.inputs.seed }}' ]; then SEED='--seed ${{ github.event.inputs.seed }}'; fi
+          python generate.py --ckpt models/best.pt --style ${{ github.event.inputs.style }} --length ${{ github.event.inputs.length }} --bpm ${{ github.event.inputs.bpm }} $SEED --out outputs --soundfonts soundfonts
       - uses: actions/upload-artifact@v4
         with:
-          name: generated
+          name: music
           path: outputs/
-          retention-days: 30
-      - name: Commit generated
+      - name: Commit
         run: |
           git config user.email 'actions@github.com'
-          git config user.name 'GitHub Actions'
+          git config user.name 'Actions'
           mkdir -p generated
           cp outputs/*.mid outputs/*.wav outputs/*.mp3 generated/ 2>/dev/null || true
           git add generated/ || true
