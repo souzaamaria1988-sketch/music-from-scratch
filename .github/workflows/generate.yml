@@ -6,7 +6,7 @@ on:
         description: 'Estilo: random, calm, tense, epic, chaotic'
         default: 'epic'
       length:
-        description: 'Tokens a gerar'
+        description: 'Tokens'
         default: '512'
       bpm:
         description: 'BPM'
@@ -32,16 +32,13 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
-      - name: Check model
-        run: |
-          ls -la models/ || echo "sem modelo"
       - name: Generate
         env:
           PYTHONUNBUFFERED: 1
         run: |
-          SEED_ARG=""
-          if [ -n "${{ github.event.inputs.seed }}" ]; then SEED_ARG="--seed ${{ github.event.inputs.seed }}"; fi
-          python generate.py --ckpt models/best.pt --prompt-style ${{ github.event.inputs.style }} --length ${{ github.event.inputs.length }} --bpm ${{ github.event.inputs.bpm }} $SEED_ARG --out outputs
+          SEED_ARG=''
+          if [ -n '${{ github.event.inputs.seed }}' ]; then SEED_ARG='--seed ${{ github.event.inputs.seed }}'; fi
+          python generate.py --ckpt models/best.pt --prompt-style ${{ github.event.inputs.style }} --length ${{ github.event.inputs.length }} --bpm ${{ github.event.inputs.bpm }} $SEED_ARG --out outputs --soundfonts soundfonts
       - uses: actions/upload-artifact@v4
         with:
           name: generated
@@ -49,10 +46,10 @@ jobs:
           retention-days: 30
       - name: Commit generated
         run: |
-          git config user.email "actions@github.com"
-          git config user.name "GitHub Actions"
+          git config user.email 'actions@github.com'
+          git config user.name 'GitHub Actions'
           mkdir -p generated
           cp outputs/*.mid outputs/*.wav outputs/*.mp3 generated/ 2>/dev/null || true
           git add generated/ || true
-          git commit -m "New track [skip ci]" || echo "no changes"
-          git push || echo "no push"
+          git commit -m 'New track [skip ci]' || echo 'no changes'
+          git push || echo 'no push'
