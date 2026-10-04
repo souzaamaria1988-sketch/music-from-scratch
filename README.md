@@ -1,35 +1,17 @@
-# Music From Scratch
+# Music From Scratch v2
 
-Modelo de musica **treinado do zero**. Sem MusicGen, sem pesos pre-treinados, sem HuggingFace.
+Transformer treinado do zero. Auto-gera MIDIs em training_data/midi e renderiza WAV em training_data/audio com soundfonts.
 
-## Arquitetura
+## Estrutura
 
-- Transformer decoder (~5M parametros) escrito em PyTorch puro
-- Treinado em tokens MIDI (pitch, duracao, velocity, canal)
-- Vocab de 149 tokens
-- 6 camadas, d_model=256, 8 cabecas
-
-## Pipeline
-
-1. midi_gen.py gera 600 MIDIs sinteticos (varios estilos)
-2. dataset.py tokeniza MIDI para sequencias
-3. train.py treina o transformer do zero (loss cai de ~5 para <2)
-4. generate.py amostra autoregressivamente e vira MIDI
-5. fluidsynth + soundfont renderiza WAV
+- training_data/midi/ - MIDIs auto-gerados
+- training_data/audio/ - WAVs renderizados
+- soundfonts/ - seus .sf2/.sf3
+- models/best.pt - modelo treinado
+- generated/ - musicas geradas
 
 ## Como rodar
 
-1. **Actions > Train From Scratch > Run workflow**
-2. Depois: **Actions > Generate Music > Run workflow**
-3. Escolha estilo: random, calm, tense, epic, chaotic
-
-## Soundfonts
-
-Coloque .sf2 em soundfonts/. Se nao tiver, o script gera so MIDI.
-
-## Estilos
-
-- calm: temperatura 0.7, top_k 20
-- tense: temperatura 0.9, top_k 30
-- epic: temperatura 1.05, top_k 40
-- chaotic: temperatura 1.3, top_k 80
+1. Actions > Train From Scratch > Run workflow
+2. Actions > Generate Music > Run workflow
+3. Estilos: random, calm, tense, epic, chaotic
