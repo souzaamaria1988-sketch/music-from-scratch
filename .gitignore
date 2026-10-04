@@ -5,3 +5,4 @@ __pycache__/
 tokens.jsonl
 checkpoints/
 outputs/
+training_data/augmented/
