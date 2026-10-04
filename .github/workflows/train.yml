@@ -1,0 +1,56 @@
+name: Train From Scratch
+on:
+  workflow_dispatch:
+    inputs:
+      midi_count:
+        description: 'Quantos MIDIs sinteticos gerar'
+        default: '600'
+      epochs:
+        description: 'Epocas'
+        default: '30'
+      block:
+        description: 'Tamanho do bloco'
+        default: '256'
+      d_model:
+        description: 'd_model'
+        default: '256'
+permissions:
+  contents: write
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+      - name: Install
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Generate MIDI dataset
+        run: python midi_gen.py --out midi --count ${{ github.event.inputs.midi_count }} --bars 8
+      - name: Tokenize
+        run: python dataset.py --midi midi --out tokens.jsonl
+      - name: Train
+        env:
+          PYTHONUNBUFFERED: 1
+        run: |
+          python train.py --tokens tokens.jsonl --epochs ${{ github.event.inputs.epochs }} --block ${{ github.event.inputs.block }} --d-model ${{ github.event.inputs.d_model }} --batch 16 --out checkpoints
+      - name: Upload checkpoint
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-checkpoint
+          path: checkpoints/best.pt
+          retention-days: 30
+      - name: Commit model
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          mkdir -p models
+          cp checkpoints/best.pt models/best.pt
+          git add models/best.pt
+          git commit -m "Update model [skip ci]" || echo "no changes"
+          git push || echo "no push"
