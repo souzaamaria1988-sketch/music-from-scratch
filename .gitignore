@@ -2,8 +2,6 @@ __pycache__/
 *.pyc
 *.log
 .env
-midi/
-outputs/
-checkpoints/
 tokens.jsonl
-generated/
+checkpoints/
+outputs/
