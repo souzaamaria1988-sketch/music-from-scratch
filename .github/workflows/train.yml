@@ -4,18 +4,15 @@ on:
     inputs:
       midi_count:
         description: 'MIDIs auto-gerados'
-        default: '800'
+        default: '2000'
       epochs:
         description: 'Epocas'
         default: '40'
       block:
         description: 'Block size'
-        default: '256'
-      d_model:
-        description: 'd_model'
-        default: '256'
-      render_audio:
-        description: 'Renderizar WAV? (true/false)'
+        default: '512'
+      augment:
+        description: 'Augmentar? (true/false)'
         default: 'true'
 permissions:
   contents: write
@@ -35,30 +32,29 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
-      - name: Self-generate MIDI
+      - name: Self-gen MIDI
         run: python self_gen.py --out training_data/midi --count ${{ github.event.inputs.midi_count }} --bars 8
-      - name: Render audio
-        if: ${{ github.event.inputs.render_audio == 'true' }}
-        run: python render_all.py --midi training_data/midi --out training_data/audio --soundfonts soundfonts
+      - name: Augment
+        if: ${{ github.event.inputs.augment == 'true' }}
+        run: python augment.py --src training_data/midi music_input --out training_data/augmented --steps 6
       - name: Tokenize
-        run: python dataset.py --midi training_data/midi --out tokens.jsonl
+        run: |
+          if [ -d training_data/augmented ]; then python dataset.py --midi training_data/augmented --out tokens.jsonl; else python dataset.py --midi training_data/midi --out tokens.jsonl; fi
       - name: Train
         env:
           PYTHONUNBUFFERED: 1
-        run: |
-          python train.py --tokens tokens.jsonl --epochs ${{ github.event.inputs.epochs }} --block ${{ github.event.inputs.block }} --d-model ${{ github.event.inputs.d_model }} --batch 16 --out checkpoints
-      - name: Upload artifact
+        run: python train.py --tokens tokens.jsonl --epochs ${{ github.event.inputs.epochs }} --block ${{ github.event.inputs.block }} --batch 24 --out checkpoints
+      - name: Upload
         uses: actions/upload-artifact@v4
         with:
-          name: training-output
+          name: model
           path: checkpoints/best.pt
-          retention-days: 30
-      - name: Commit model
+      - name: Commit
         run: |
           git config user.email 'actions@github.com'
-          git config user.name 'GitHub Actions'
+          git config user.name 'Actions'
           mkdir -p models
           cp checkpoints/best.pt models/best.pt
           git add models/best.pt || true
-          git commit -m 'Update model [skip ci]' || echo 'no changes'
+          git commit -m 'Model update [skip ci]' || echo 'no changes'
           git push || echo 'no push'
