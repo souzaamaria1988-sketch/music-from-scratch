@@ -1,17 +1,28 @@
-# Music From Scratch v2
+# Music From Scratch v3
 
-Transformer treinado do zero. Auto-gera MIDIs em training_data/midi e renderiza WAV em training_data/audio com soundfonts.
+Transformer 15M params com RoPE, treinado do zero.
 
-## Estrutura
-
+## Pastas
 - training_data/midi/ - MIDIs auto-gerados
-- training_data/audio/ - WAVs renderizados
-- soundfonts/ - seus .sf2/.sf3
+- training_data/augmented/ - MIDIs aumentados (transpostos)
+- training_data/audio/ - WAVs (opcional)
+- music_input/ - SEUS MIDIs de exemplo (entram no treino)
+- soundfonts/ - seus .sf2 (usados pra renderizar)
 - models/best.pt - modelo treinado
 - generated/ - musicas geradas
 
-## Como rodar
+## Uso
+1. Coloque seus MIDIs em music_input/ (opcional)
+2. Coloque seus .sf2 em soundfonts/
+3. Actions > Train From Scratch > Run workflow
+4. Actions > Generate Music > Run workflow
 
-1. Actions > Train From Scratch > Run workflow
-2. Actions > Generate Music > Run workflow
-3. Estilos: random, calm, tense, epic, chaotic
+## Melhorias v3
+- Modelo 3x maior (15M params)
+- RoPE (positional encoding rotativo)
+- Augmentation por transposicao
+- Repetition penalty na geracao
+- Label smoothing
+- LR com warmup + cosine
+- 4 tracks separados (lead, pad, bass, drums)
+- top_p (nucleus) sampling
